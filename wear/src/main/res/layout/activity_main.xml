@@ -13,17 +13,17 @@
         android:padding="@dimen/inner_frame_layout_padding">
 
         <TextView
-            android:id="@+id/Heart"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:text="Heartrate unavailable" />
-        <TextView
             android:id="@+id/Temp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
+            android:layout_gravity="center"
             android:text="Temperature unavailable" />
+        <TextView
+            android:id="@+id/Heart"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:text="Heartrate unavailable" />
 
     </FrameLayout>
 </androidx.wear.widget.BoxInsetLayout>

@@ -18,6 +18,9 @@ import com.google.android.gms.wearable.CapabilityInfo;
 import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.Wearable;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
@@ -29,6 +32,12 @@ public class MainActivity extends Activity implements SensorEventListener {
     private SensorManager mSensorManager;
     private Sensor mHeart;
     private Sensor mTemperature;
+
+
+    private String strHeartRate;
+    private String strTemp;
+
+    JSONObject jsonMsg = new JSONObject();
 
     private String transcriptionNodeId;
 
@@ -52,20 +61,44 @@ public class MainActivity extends Activity implements SensorEventListener {
         if (mSensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE) != null){
             mHeart = mSensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE);
             Log.i("Sensor", "Herz Sensor initiiert");
+
+            try {
+                jsonMsg.put("Heartrate", "unknown");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
         }
         else{
             heartView.setText("Heartrate is not available");
             Log.e("Sensor", "Herz Sensor nicht gefunden");
+
+            try {
+                jsonMsg.put("Heartrate", "NULL");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
         }
 
         // TEMPERATURE INITIATION
         if (mSensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE) != null){
             mTemperature = mSensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE);
             Log.i("Sensor", "Temperatur Sensor initiiert");
+
+            try {
+                jsonMsg.put("Temperature","unknown");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
         }
         else{
             tempView.setText("Temperature is not available");
             Log.e("Sensor", "Temperatur Sensor nicht gefunden");
+
+            try {
+                jsonMsg.put("Temperature", "NULL");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -74,22 +107,38 @@ public class MainActivity extends Activity implements SensorEventListener {
         super.onResume();
         mSensorManager.registerListener(this, mHeart, SensorManager.SENSOR_DELAY_NORMAL);
         mSensorManager.registerListener(this, mTemperature, SensorManager.SENSOR_DELAY_NORMAL);
-
-
     }
 
     @Override
     public void onSensorChanged(SensorEvent event){
-        if (event.sensor.getType() == Sensor.TYPE_HEART_RATE){
+        if (event.sensor.getType() == Sensor.TYPE_HEART_RATE) {
             float heartRate = event.values[0];
-            String strHeartRate = Float.toString(heartRate);
-            beginSendMessageToPhone(strHeartRate);
+            strHeartRate = Float.toString(heartRate);
+
+            try {
+                updateJSON();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+
+            beginSendMessageToPhone(jsonMsg.toString());
+
             heartView.setText("Heartrate: " + strHeartRate);
-            Log.i("HeartRate", "Puls hat sich geaendert: "+ strHeartRate);
+            Log.i("HeartRate", "Puls hat sich geaendert: " + strHeartRate);
 
         } else if (event.sensor.getType() == Sensor.TYPE_AMBIENT_TEMPERATURE){
             float temp = event.values[0];
-            String strTemp = Float.toString(temp);
+            strTemp = Float.toString(temp);
+
+            try {
+                updateJSON();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            beginSendMessageToPhone(jsonMsg.toString());
+
 
             tempView.setText("Temperature: "+ strTemp);
             //Log.i("Temperature", "Temperatur hat sich geaendert: "+ strTemp);
@@ -120,7 +169,6 @@ public class MainActivity extends Activity implements SensorEventListener {
                 e.printStackTrace();
             }
         });
-
     }
 
     private void updateTranscriptionCapability(CapabilityInfo capabilityInfo) {
@@ -158,4 +206,8 @@ public class MainActivity extends Activity implements SensorEventListener {
         });
     }
 
+    private void updateJSON() throws JSONException {
+        jsonMsg.put("Heartrate", strHeartRate);
+        jsonMsg.put("Temperature", strTemp);
+    }
 }
