@@ -11,6 +11,7 @@
         android:id="@+id/heart"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
         android:gravity="center_horizontal"
         android:text="Heartrate: unavailable"
         app:layout_constraintEnd_toEndOf="parent"
@@ -21,10 +22,43 @@
         android:id="@+id/temp"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="7dp"
+        android:layout_marginTop="10dp"
         android:gravity="center_horizontal"
         android:text="Temperature: unavailable"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/heart" />
+
+    <TextView
+        android:id="@+id/lat"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:gravity="center_horizontal"
+        android:text="lat: unavailable"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/temp" />
+
+    <TextView
+        android:id="@+id/lng"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="0dp"
+        android:gravity="center_horizontal"
+        android:text="lng: unavailable"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/lat" />
+
+    <TextView
+        android:id="@+id/weath"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:gravity="center_horizontal"
+        android:text="Weather: unavailable"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/lng" />
 </androidx.constraintlayout.widget.ConstraintLayout>

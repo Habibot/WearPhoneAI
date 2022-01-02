@@ -80,7 +80,7 @@ public class MainActivity extends Activity implements SensorEventListener {
         }
 
         // TEMPERATURE INITIATION
-        if (mSensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE) != null){
+        /*if (mSensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE) != null){
             mTemperature = mSensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE);
             Log.i("Sensor", "Temperatur Sensor initiiert");
 
@@ -99,14 +99,20 @@ public class MainActivity extends Activity implements SensorEventListener {
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-        }
+        }*/
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         mSensorManager.registerListener(this, mHeart, SensorManager.SENSOR_DELAY_NORMAL);
-        mSensorManager.registerListener(this, mTemperature, SensorManager.SENSOR_DELAY_NORMAL);
+       // mSensorManager.registerListener(this, mTemperature, SensorManager.SENSOR_DELAY_NORMAL);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        mSensorManager.unregisterListener(this);
     }
 
     @Override
@@ -127,7 +133,7 @@ public class MainActivity extends Activity implements SensorEventListener {
             heartView.setText("Heartrate: " + strHeartRate);
             Log.i("HeartRate", "Puls hat sich geaendert: " + strHeartRate);
 
-        } else if (event.sensor.getType() == Sensor.TYPE_AMBIENT_TEMPERATURE){
+        } /*else if (event.sensor.getType() == Sensor.TYPE_AMBIENT_TEMPERATURE){
             float temp = event.values[0];
             strTemp = Float.toString(temp);
 
@@ -142,7 +148,7 @@ public class MainActivity extends Activity implements SensorEventListener {
 
             tempView.setText("Temperature: "+ strTemp);
             //Log.i("Temperature", "Temperatur hat sich geaendert: "+ strTemp);
-        }
+        }*/
     }
 
     @Override
@@ -208,6 +214,6 @@ public class MainActivity extends Activity implements SensorEventListener {
 
     private void updateJSON() throws JSONException {
         jsonMsg.put("Heartrate", strHeartRate);
-        jsonMsg.put("Temperature", strTemp);
+        //jsonMsg.put("Temperature", strTemp);
     }
 }
