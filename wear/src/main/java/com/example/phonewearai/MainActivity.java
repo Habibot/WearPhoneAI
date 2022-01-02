@@ -7,7 +7,6 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.TextView;
 
 import com.example.phonewearai.databinding.ActivityMainBinding;
@@ -27,15 +26,9 @@ import java.util.concurrent.ExecutionException;
 public class MainActivity extends Activity implements SensorEventListener {
 
     private TextView heartView;
-    private TextView tempView;
     private ActivityMainBinding binding;
     private SensorManager mSensorManager;
     private Sensor mHeart;
-    private Sensor mTemperature;
-
-
-    private String strHeartRate;
-    private String strTemp;
 
     JSONObject jsonMsg = new JSONObject();
 
@@ -45,6 +38,9 @@ public class MainActivity extends Activity implements SensorEventListener {
     private static final String SET_MESSAGE_CAPABILITY = "setString";
     public static final String SET_MESSAGE_PATH = "/setString";
 
+    // Important CONSTANTS for JSON
+    private static final String SENSOR_HEART_NAME = "Heartrate";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,61 +48,37 @@ public class MainActivity extends Activity implements SensorEventListener {
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
         heartView = findViewById(R.id.Heart);
-        tempView = findViewById(R.id.Temp);
 
         mSensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
 
         // HEARTRATE INITIATION
         if (mSensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE) != null){
             mHeart = mSensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE);
-            Log.i("Sensor", "Herz Sensor initiiert");
 
             try {
-                jsonMsg.put("Heartrate", "unknown");
+                jsonMsg.put(SENSOR_HEART_NAME, "unknown");
             } catch (JSONException e) {
                 e.printStackTrace();
             }
         }
         else{
             heartView.setText("Heartrate is not available");
-            Log.e("Sensor", "Herz Sensor nicht gefunden");
-
             try {
-                jsonMsg.put("Heartrate", "NULL");
+                jsonMsg.put(SENSOR_HEART_NAME, "NULL");
             } catch (JSONException e) {
                 e.printStackTrace();
             }
         }
-
-        // TEMPERATURE INITIATION
-        /*if (mSensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE) != null){
-            mTemperature = mSensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE);
-            Log.i("Sensor", "Temperatur Sensor initiiert");
-
-            try {
-                jsonMsg.put("Temperature","unknown");
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
-        else{
-            tempView.setText("Temperature is not available");
-            Log.e("Sensor", "Temperatur Sensor nicht gefunden");
-
-            try {
-                jsonMsg.put("Temperature", "NULL");
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }*/
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        mSensorManager.registerListener(this, mHeart, SensorManager.SENSOR_DELAY_NORMAL);
-       // mSensorManager.registerListener(this, mTemperature, SensorManager.SENSOR_DELAY_NORMAL);
+        if (mSensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE) != null) {
+            mSensorManager.registerListener(this, mHeart, SensorManager.SENSOR_DELAY_NORMAL);
+        }
     }
 
     @Override
@@ -115,45 +87,39 @@ public class MainActivity extends Activity implements SensorEventListener {
         mSensorManager.unregisterListener(this);
     }
 
+
     @Override
     public void onSensorChanged(SensorEvent event){
         if (event.sensor.getType() == Sensor.TYPE_HEART_RATE) {
-            float heartRate = event.values[0];
-            strHeartRate = Float.toString(heartRate);
-
-            try {
-                updateJSON();
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-
+            String strHeartRate = updateSensorValue(event, SENSOR_HEART_NAME);
 
             beginSendMessageToPhone(jsonMsg.toString());
 
             heartView.setText("Heartrate: " + strHeartRate);
-            Log.i("HeartRate", "Puls hat sich geaendert: " + strHeartRate);
-
-        } /*else if (event.sensor.getType() == Sensor.TYPE_AMBIENT_TEMPERATURE){
-            float temp = event.values[0];
-            strTemp = Float.toString(temp);
-
-            try {
-                updateJSON();
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-
-            beginSendMessageToPhone(jsonMsg.toString());
-
-
-            tempView.setText("Temperature: "+ strTemp);
-            //Log.i("Temperature", "Temperatur hat sich geaendert: "+ strTemp);
-        }*/
+        }
     }
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int i) {
 
+    }
+
+
+    private String updateSensorValue(SensorEvent event, String sensorName){
+        float sensorValue = event.values[0];
+        String strSensorValue = Float.toString(sensorValue);
+
+        try {
+            updateJSON(sensorName, strSensorValue);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return strSensorValue;
+    }
+
+    private void updateJSON(String name, String value) throws JSONException {
+        jsonMsg.put(name, value);
     }
 
     //credits https://github.com/Bilbobx182
@@ -205,15 +171,12 @@ public class MainActivity extends Activity implements SensorEventListener {
             if (transcriptionNodeId != null) {
                 final Task<Integer> sendTask = Wearable.getMessageClient(getBaseContext()).sendMessage(transcriptionNodeId, SET_MESSAGE_PATH, message);
 
-                sendTask.addOnSuccessListener(dataItem -> Log.d("MESSAGESTATE", "SUCCESS"));
+                /*sendTask.addOnSuccessListener(dataItem -> Log.d("MESSAGESTATE", "SUCCESS"));
                 sendTask.addOnFailureListener(dataItem -> Log.d("MESSAGESTATE", "FAILURE"));
                 sendTask.addOnCompleteListener(task -> Log.d("MESSAGESTATE", "COMPLETE"));
+                */
             }
         });
     }
 
-    private void updateJSON() throws JSONException {
-        jsonMsg.put("Heartrate", strHeartRate);
-        //jsonMsg.put("Temperature", strTemp);
-    }
 }
