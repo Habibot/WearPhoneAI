@@ -1,6 +1,8 @@
 package com.example.phonewearai;
 
+import android.Manifest;
 import android.app.Activity;
+import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -8,6 +10,8 @@ import android.hardware.SensorManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.widget.TextView;
+
+import androidx.core.app.ActivityCompat;
 
 import com.example.phonewearai.databinding.ActivityMainBinding;
 import com.google.android.gms.tasks.Task;
@@ -34,6 +38,8 @@ public class MainActivity extends Activity implements SensorEventListener {
 
     private String transcriptionNodeId;
 
+    private final int REQUEST_SENSOR_PERMISSION = 1;
+
     //credits https://github.com/Bilbobx182
     private static final String SET_MESSAGE_CAPABILITY = "setString";
     public static final String SET_MESSAGE_PATH = "/setString";
@@ -45,13 +51,15 @@ public class MainActivity extends Activity implements SensorEventListener {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-
         heartView = findViewById(R.id.Heart);
 
         mSensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BODY_SENSORS) != PackageManager.PERMISSION_GRANTED){
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.BODY_SENSORS}, REQUEST_SENSOR_PERMISSION);
+        }
 
         // HEARTRATE INITIATION
         if (mSensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE) != null){
@@ -103,7 +111,6 @@ public class MainActivity extends Activity implements SensorEventListener {
     public void onAccuracyChanged(Sensor sensor, int i) {
 
     }
-
 
     private String updateSensorValue(SensorEvent event, String sensorName){
         float sensorValue = event.values[0];

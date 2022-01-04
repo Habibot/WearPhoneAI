@@ -55,35 +55,29 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
     // Important CONSTANTS for JSON
     private static final String SENSOR_HEART_NAME = "Heartrate";
 
+    private final int REQUEST_LOCATION_PERMISSION = 1;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        heartView = findViewById(R.id.heart);
-        tempView = findViewById(R.id.temp);
-        latView = findViewById(R.id.lat);
-        lngView = findViewById(R.id.lng);
-        cityView = findViewById(R.id.city);
-
+        initViews();
 
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
-        Criteria criteria = new Criteria();
-        provider = locationManager.getBestProvider(criteria, false);
-
         // Checks for Request --> ask for permission
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION_PERMISSION);
             return;
         }
         // Initialize the location fields
-        Location location = locationManager.getLastKnownLocation(provider);
+        Criteria criteria = new Criteria();
+        provider = locationManager.getBestProvider(criteria, false);
 
+        Location location = locationManager.getLastKnownLocation(provider);
         if (location != null){
             Log.i("Provider", provider+" has been selected!");
             onLocationChanged(location);
-            updateWeather();
         }
     }
 
@@ -92,6 +86,7 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
         super.onResume();
         // Checks for Request --> ask for permission
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION_PERMISSION);
             return;
         }
         locationManager.requestLocationUpdates(provider, 400, 1, this);
@@ -116,8 +111,6 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
         String strHeartRate = Sensors.get(SENSOR_HEART_NAME);
 
         heartView.setText("Heartrate: "+strHeartRate);
-
-
     }
 
     @Override
@@ -144,6 +137,37 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
     @Override
     public void onProviderDisabled(@NonNull String provider) {
         Toast.makeText(this, "Disabled provider " + provider, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode) {
+            case REQUEST_LOCATION_PERMISSION: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // permission was granted
+                    Criteria criteria = new Criteria();
+                    provider = locationManager.getBestProvider(criteria, false);
+
+                } else {
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                }
+            }
+
+            // other 'case' lines to check for other
+            // permissions this app might request
+        }
+    }
+
+    private void initViews(){
+        heartView = findViewById(R.id.heart);
+        tempView = findViewById(R.id.temp);
+        latView = findViewById(R.id.lat);
+        lngView = findViewById(R.id.lng);
+        cityView = findViewById(R.id.city);
     }
 
     private void updateWeather(){
@@ -190,4 +214,5 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
         RequestQueue requestQueue = Volley.newRequestQueue(getApplicationContext());
         requestQueue.add(stringRequest);
     }
+
 }
