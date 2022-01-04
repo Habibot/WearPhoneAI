@@ -42,14 +42,17 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
     private TextView latView;
     private TextView lngView;
     private TextView cityView;
+    private TextView eleView;
 
     private LocationManager locationManager;
     private String provider;
 
     private float lat;
     private float lng;
+    private double elevation;
     private String strLat;
     private String strLng;
+    private String strElevation;
     private String weathAPI = "c198627a1303756c85ea29900f1eaa7c";
 
     // Important CONSTANTS for JSON
@@ -117,14 +120,13 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
     public void onLocationChanged(@NonNull Location location) {
         lat = (float) location.getLatitude();
         lng = (float) location.getLongitude();
-
         strLat = Float.toString(lat);
         strLng = Float.toString(lng);
-
         latView.setText("lat: "+strLat);
         lngView.setText("lng: "+strLng);
 
         updateWeather();
+        updateElevation();
 
         Log.i("Location", "Location has been updated");
     }
@@ -168,10 +170,12 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
         latView = findViewById(R.id.lat);
         lngView = findViewById(R.id.lng);
         cityView = findViewById(R.id.city);
+        eleView = findViewById(R.id.ele);
     }
 
     private void updateWeather(){
         String weathURL = "https://api.openweathermap.org/data/2.5/weather?lat="+strLat+"&lon="+strLng+"&appid="+weathAPI;
+        Log.i("weathURL", weathURL);
 
         StringRequest stringRequest = new StringRequest(Request.Method.POST, weathURL, new Response.Listener<String>() {
             @Override
@@ -215,4 +219,35 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
         requestQueue.add(stringRequest);
     }
 
+    private void updateElevation(){
+        String altURL = "https://api.opentopodata.org/v1/aster30m?locations="+strLat+","+strLng;
+        Log.i("altURL", altURL);
+
+        StringRequest stringRequest = new StringRequest(Request.Method.GET, altURL, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                try {
+                    JSONObject jsonResponse = new JSONObject(response);
+                    JSONArray jsonArray = jsonResponse.getJSONArray("results");
+                    JSONObject jsonObjectElevation = jsonArray.getJSONObject(0);
+                    elevation = jsonObjectElevation.getDouble("elevation");
+                    strElevation = Double.toString(elevation);
+                    eleView.setText("elevation: "+strElevation);
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                eleView.setText("elevation: API ERROR");
+            }
+        });
+
+        RequestQueue requestQueue = Volley.newRequestQueue(getApplicationContext());
+        requestQueue.add(stringRequest);
+    }
 }

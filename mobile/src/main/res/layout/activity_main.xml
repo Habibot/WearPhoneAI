@@ -52,6 +52,17 @@
         app:layout_constraintTop_toBottomOf="@+id/lat" />
 
     <TextView
+        android:id="@+id/ele"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="0dp"
+        android:gravity="center_horizontal"
+        android:text="elevation: unavailable"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/lng" />
+
+    <TextView
         android:id="@+id/city"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -60,5 +71,5 @@
         android:text="City: unavailable"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/lng" />
+        app:layout_constraintTop_toBottomOf="@+id/ele" />
 </androidx.constraintlayout.widget.ConstraintLayout>
