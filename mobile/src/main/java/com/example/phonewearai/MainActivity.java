@@ -43,6 +43,7 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
     private TextView lngView;
     private TextView cityView;
     private TextView eleView;
+    private TextView stepView;
 
     private LocationManager locationManager;
     private String provider;
@@ -57,6 +58,7 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
 
     // Important CONSTANTS for JSON
     private static final String SENSOR_HEART_NAME = "Heartrate";
+    private static final String SENSOR_STEP_NAME = "Stepcounter";
 
     private final int REQUEST_LOCATION_PERMISSION = 1;
 
@@ -81,6 +83,8 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
         if (location != null){
             Log.i("Provider", provider+" has been selected!");
             onLocationChanged(location);
+            updateWeather();
+            updateElevation();
         }
     }
 
@@ -92,7 +96,7 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION_PERMISSION);
             return;
         }
-        locationManager.requestLocationUpdates(provider, 400, 1, this);
+        locationManager.requestLocationUpdates(provider, 500, 10, this);
         Wearable.getMessageClient(this).addListener(this);
     }
 
@@ -112,8 +116,11 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
         Map<String, String> Sensors = new Gson().fromJson(msg, new TypeToken<Map<String, String>>() {}.getType());
 
         String strHeartRate = Sensors.get(SENSOR_HEART_NAME);
+        String strStepCounter = Sensors.get(SENSOR_STEP_NAME);
 
         heartView.setText("Heartrate: "+strHeartRate);
+        stepView.setText("Steps: " +strStepCounter);
+
     }
 
     @Override
@@ -124,9 +131,6 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
         strLng = Float.toString(lng);
         latView.setText("lat: "+strLat);
         lngView.setText("lng: "+strLng);
-
-        updateWeather();
-        updateElevation();
 
         Log.i("Location", "Location has been updated");
     }
@@ -171,6 +175,7 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
         lngView = findViewById(R.id.lng);
         cityView = findViewById(R.id.city);
         eleView = findViewById(R.id.ele);
+        stepView = findViewById(R.id.step);
     }
 
     private void updateWeather(){
