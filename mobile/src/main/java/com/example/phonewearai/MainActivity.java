@@ -1,6 +1,8 @@
 package com.example.phonewearai;
 
 import android.Manifest;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Criteria;
@@ -9,6 +11,10 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.ImageButton;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -32,7 +38,11 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class MainActivity extends AppCompatActivity implements MessageClient.OnMessageReceivedListener, LocationListener {
 
@@ -44,9 +54,15 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
     private TextView cityView;
     private TextView eleView;
     private TextView stepView;
+    private TextView deviceView;
+    private Spinner spinView;
+    private ImageButton refView;
+
+    private List<String> allDevices = new ArrayList<String>();
 
     private LocationManager locationManager;
     private String provider;
+    private BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
     private float lat;
     private float lng;
@@ -61,6 +77,7 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
     private static final String SENSOR_STEP_NAME = "Stepcounter";
 
     private final int REQUEST_LOCATION_PERMISSION = 1;
+    private final int REQUEST_BLUETOOTH_PERMISSION = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,10 +88,21 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
         // Checks for Request --> ask for permission
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.BLUETOOTH_CONNECT}, REQUEST_BLUETOOTH_PERMISSION);
+            return;
+        }
+
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION_PERMISSION);
             return;
         }
+
+        // displays all connected bluetooth devices
+        if (bluetoothAdapter.isEnabled() && bluetoothAdapter != null){
+            checkBluetooth();
+        }
+
         // Initialize the location fields
         Criteria criteria = new Criteria();
         provider = locationManager.getBestProvider(criteria, false);
@@ -96,6 +124,7 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION_PERMISSION);
             return;
         }
+
         locationManager.requestLocationUpdates(provider, 500, 10, this);
         Wearable.getMessageClient(this).addListener(this);
     }
@@ -111,6 +140,7 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
     public void onMessageReceived(MessageEvent messageEvent) {
         String msg = new String(messageEvent.getData());
         Log.i("Message received", msg);
+        Log.i("TAG", "");
 
         //https://www.py4u.net/discuss/1195822
         Map<String, String> Sensors = new Gson().fromJson(msg, new TypeToken<Map<String, String>>() {}.getType());
@@ -176,6 +206,25 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
         cityView = findViewById(R.id.city);
         eleView = findViewById(R.id.ele);
         stepView = findViewById(R.id.step);
+        deviceView = findViewById(R.id.device);
+        spinView = findViewById(R.id.spinner);
+        ArrayAdapter<String> myAdapter = new ArrayAdapter<String>(MainActivity.this,
+                android.R.layout.simple_list_item_1, allDevices);
+        myAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinView.setAdapter(myAdapter);
+        refView = findViewById(R.id.blueref);
+        refView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (bluetoothAdapter.isEnabled() && bluetoothAdapter != null){
+                    checkBluetooth();
+                } else {
+                    deviceView.setText("No Bluetooth Devices Connected");
+                    Toast.makeText(MainActivity.this, "Bluetooth Not Available",
+                    Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
     }
 
     private void updateWeather(){
@@ -255,4 +304,37 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
         RequestQueue requestQueue = Volley.newRequestQueue(getApplicationContext());
         requestQueue.add(stringRequest);
     }
+
+    public void checkBluetooth(){
+        Set<BluetoothDevice> pairedDevices = BluetoothAdapter.getDefaultAdapter().getBondedDevices();
+        if (allDevices.isEmpty()){
+            deviceView.setText("No Bluetooth Devices Connected");
+        }
+        if (pairedDevices.size() > 0){
+            allDevices.clear();
+
+            for (BluetoothDevice device : pairedDevices){
+                if (isConnected(device)){
+                    Log.i("NAME", device.getName());
+                    String deviceName = device.getName();
+                    allDevices.add(deviceName);
+                }
+            }
+
+            if (allDevices.size() > 0){
+                deviceView.setText("Bluetooth Devices Connected");
+            }
+        }
+    }
+
+    public boolean isConnected(BluetoothDevice device) {
+        try {
+            Method m = device.getClass().getMethod("isConnected", (Class[]) null);
+            boolean connected = (boolean) m.invoke(device, (Object[]) null);
+            return connected;
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
 }
