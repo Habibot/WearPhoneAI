@@ -1,18 +1,16 @@
 package com.example.phonewearai;
 
-import android.Manifest;
-import android.annotation.SuppressLint;
-import android.content.pm.PackageManager;
+import android.app.Activity;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.wearable.activity.WearableActivity;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.util.Log;
 import android.widget.TextView;
-
-import androidx.core.app.ActivityCompat;
 
 import com.example.phonewearai.databinding.ActivityMainBinding;
 import com.google.android.gms.tasks.Task;
@@ -28,7 +26,7 @@ import org.json.JSONObject;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
-public class MainActivity extends WearableActivity implements SensorEventListener {
+public class MainActivity extends Activity implements SensorEventListener {
 
     private TextView heartView;
     private TextView stepView;
@@ -37,6 +35,8 @@ public class MainActivity extends WearableActivity implements SensorEventListene
     private Sensor mHeart;
     private Sensor mStepCounter;
 
+    private Handler handler;
+
     private boolean isStep = false;
     private int intFullSteps;
 
@@ -44,7 +44,8 @@ public class MainActivity extends WearableActivity implements SensorEventListene
 
     private String transcriptionNodeId;
 
-    private final int REQUEST_SENSOR_PERMISSION = 1;
+
+    private final int DATA_MESSAGE_DELAY = 5000; // 5 second delay
 
 
     //credits https://github.com/Bilbobx182
@@ -62,15 +63,25 @@ public class MainActivity extends WearableActivity implements SensorEventListene
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-        heartView = findViewById(R.id.Heart);
-        stepView = findViewById(R.id.Step);
+        initViews();
 
         mSensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
 
-        checkPermissions();
+        PermissionChecker.checkPermissions(getApplicationContext(), this);
         initHeart();
         initStep();
-        setAmbientEnabled();
+        startHandlerThread();
+
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Log.i("HANDLER", "IT WORKS");
+                if (jsonMsg.length() != 0){
+                    beginSendMessageToPhone(jsonMsg.toString());
+                }
+                handler.postDelayed(this, DATA_MESSAGE_DELAY);
+            }
+        }, DATA_MESSAGE_DELAY);
 
     }
 
@@ -84,6 +95,8 @@ public class MainActivity extends WearableActivity implements SensorEventListene
         if (mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER) != null) {
             mSensorManager.registerListener(this,mStepCounter, SensorManager.SENSOR_DELAY_NORMAL);
         }
+
+
     }
 
     @Override
@@ -92,8 +105,6 @@ public class MainActivity extends WearableActivity implements SensorEventListene
         mSensorManager.unregisterListener(this);
     }
 
-
-    @SuppressLint("SetTextI18n")
     @Override
     public void onSensorChanged(SensorEvent event){
         if (event.sensor.getType() == Sensor.TYPE_HEART_RATE) {
@@ -103,8 +114,6 @@ public class MainActivity extends WearableActivity implements SensorEventListene
             }
 
             updateSensorValue(event.values[0], SENSOR_HEART_NAME);
-            beginSendMessageToPhone(jsonMsg.toString());
-
             heartView.setText("Heartrate: " + (int) event.values[0]);
         }
         if (event.sensor.getType() == Sensor.TYPE_STEP_COUNTER){
@@ -116,8 +125,6 @@ public class MainActivity extends WearableActivity implements SensorEventListene
             int actualSteps = (int) event.values[0] - intFullSteps;
 
             updateSensorValue(actualSteps, SENSOR_STEP_NAME);
-            beginSendMessageToPhone(jsonMsg.toString());
-
             stepView.setText("Steps: " + actualSteps);
         }
     }
@@ -125,37 +132,6 @@ public class MainActivity extends WearableActivity implements SensorEventListene
     @Override
     public void onAccuracyChanged(Sensor sensor, int i) {
 
-    }
-
-    private void checkPermissions(){
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BODY_SENSORS) != PackageManager.PERMISSION_GRANTED){
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.BODY_SENSORS}, REQUEST_SENSOR_PERMISSION);
-        }
-    }
-    private void initHeart(){
-        if (mSensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE) != null){
-            mHeart = mSensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE);
-
-            try {
-                jsonMsg.put(SENSOR_HEART_NAME, "unknown");
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
-        else{
-            heartView.setText("Heartrate is not available");
-            try {
-                jsonMsg.put(SENSOR_HEART_NAME, "NULL");
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private void initStep() {
-        if (mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER) != null) {
-            mStepCounter = mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
-        }
     }
 
     private void updateSensorValue(float value, String sensorName){
@@ -200,7 +176,6 @@ public class MainActivity extends WearableActivity implements SensorEventListene
         transcriptionNodeId = pickBestNodeId(connectedNodes);
     }
 
-
     private String pickBestNodeId(Set<Node> nodes) {
         String bestNodeId = null;
         // Find a nearby node or pick one arbitrarily
@@ -212,8 +187,6 @@ public class MainActivity extends WearableActivity implements SensorEventListene
         }
         return bestNodeId;
     }
-
-
 
     //credits https://github.com/Bilbobx182
     private void requestTranscription(final byte[] message) {
@@ -228,6 +201,43 @@ public class MainActivity extends WearableActivity implements SensorEventListene
                 */
             }
         });
+    }
+
+    private void startHandlerThread(){
+        HandlerThread mHandlerThread = new HandlerThread("HandlerThread");
+        mHandlerThread.start();
+        handler = new Handler(mHandlerThread.getLooper());
+    }
+
+    private void initViews(){
+        heartView = findViewById(R.id.Heart);
+        stepView = findViewById(R.id.Step);
+    }
+
+    private void initHeart(){
+        if (mSensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE) != null){
+            mHeart = mSensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE);
+
+            try {
+                jsonMsg.put(SENSOR_HEART_NAME, "unknown");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        else{
+            heartView.setText("Heartrate is not available");
+            try {
+                jsonMsg.put(SENSOR_HEART_NAME, "NULL");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void initStep() {
+        if (mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER) != null) {
+            mStepCounter = mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
+        }
     }
 
 }

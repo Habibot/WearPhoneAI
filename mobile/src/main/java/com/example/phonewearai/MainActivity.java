@@ -40,6 +40,8 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
     private TextView deviceView;
     private Spinner spinView;
     private ImageButton refView;
+    private TextView cadenceView;
+    private TextView speedView;
 
     private List<String> allDevices = new ArrayList<>();
 
@@ -48,9 +50,13 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
 
     private String strLat;
     private String strLng;
-//    private double elevation;
-//    private String strElevation;
-//    private String weathAPI = "c198627a1303756c85ea29900f1eaa7c";
+    private String strHeartRate;
+    private String strStepCounter = "0";
+    private String strOldStepCounter = "0";
+    private String strSpeed;
+    private int cadence;
+
+    private boolean isHandler = true;
 
     // Important CONSTANTS for JSON
     private static final String SENSOR_HEART_NAME = "Heartrate";
@@ -58,12 +64,18 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
 
     private static final int REQUEST_LOCATION_PERMISSION = 1;
 
+    private final ArrayList<Integer> heartList = new ArrayList<>();
+    private final ArrayList<Integer> cadenceList = new ArrayList<>();
+    private final ArrayList<Integer> stepsList = new ArrayList<>();
+    private final ArrayList<Float> speedList = new ArrayList<Float>();
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         initViews();
+
 
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
@@ -78,9 +90,13 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
         if (location != null){
             Log.i("Provider", provider+" has been selected!");
             onLocationChanged(location);
-            WeatherChecker.callWeather(strLat,strLng,getApplicationContext(),tempView,cityView,eleView);
-//            updateWeather();
-//            updateElevation();
+            WeatherChecker.callWeather(
+                    strLat,
+                    strLng,
+                    getApplicationContext(),
+                    tempView,
+                    cityView,
+                    eleView);
         }
     }
 
@@ -90,13 +106,15 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
         // Checks for Request --> ask for permission
         PermissionChecker.checkPermission(getApplicationContext(), this);
 
-        locationManager.requestLocationUpdates(provider, 500, 10, this);
+        locationManager.requestLocationUpdates(provider, 1000, 5, this);
         Wearable.getMessageClient(this).addListener(this);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
+
+
         locationManager.removeUpdates(this);
         Wearable.getMessageClient(this).removeListener(this);
     }
@@ -107,11 +125,26 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
         Log.i("Message received", msg);
         Log.i("TAG", "");
 
+
         //https://www.py4u.net/discuss/1195822
         Map<String, String> Sensors = new Gson().fromJson(msg, new TypeToken<Map<String, String>>() {}.getType());
 
-        String strHeartRate = Sensors.get(SENSOR_HEART_NAME);
-        String strStepCounter = Sensors.get(SENSOR_STEP_NAME);
+        strHeartRate = Sensors.get(SENSOR_HEART_NAME);
+        // if makes sure that it wont be overwritten when heartrate is getting send
+        if(!Sensors.get(SENSOR_STEP_NAME).equals(strStepCounter)){
+            strOldStepCounter = strStepCounter;
+            strStepCounter = Sensors.get(SENSOR_STEP_NAME);
+        }
+
+        Log.i("TAG", strStepCounter + " oder " + strOldStepCounter);
+
+        cadence = MovementChecker.updateCadence(strStepCounter, strOldStepCounter);
+        if(Integer.parseInt(strStepCounter) != 0) {
+            cadenceList.add(cadence);
+            cadenceView.setText("Cadence: " + cadence);
+        }
+        heartList.add(Integer.parseInt(strHeartRate));
+        stepsList.add(Integer.parseInt(strStepCounter));
 
         heartView.setText("Heartrate: "+strHeartRate);
         stepView.setText("Steps: " +strStepCounter);
@@ -124,20 +157,24 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
         float lng = (float) location.getLongitude();
         strLat = Float.toString(lat);
         strLng = Float.toString(lng);
+        strSpeed = Float.toString(location.getSpeed());
+        speedList.add(location.getSpeed());
         latView.setText("lat: "+strLat);
         lngView.setText("lng: "+strLng);
+        speedView.setText("Speed: "+String.format("%.2f", strSpeed));
+
 
         Log.i("Location", "Location has been updated");
     }
 
     @Override
     public void onProviderEnabled(@NonNull String provider) {
-        Toast.makeText(getApplicationContext(), "Enabled new provider " + provider, Toast.LENGTH_SHORT).show();
+        Toast.makeText(getApplicationContext(), "GPS Activated", Toast.LENGTH_SHORT).show();
     }
 
     @Override
     public void onProviderDisabled(@NonNull String provider) {
-        Toast.makeText(getApplicationContext(), "Disabled provider " + provider, Toast.LENGTH_SHORT).show();
+        Toast.makeText(getApplicationContext(), "GPS Deactivated ", Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -172,18 +209,22 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
         eleView = findViewById(R.id.ele);
         stepView = findViewById(R.id.step);
         deviceView = findViewById(R.id.device);
+        refView = findViewById(R.id.blueref);
+        cadenceView = findViewById(R.id.cadence);
         spinView = findViewById(R.id.spinner);
+        speedView = findViewById(R.id.speed);
+
         ArrayAdapter<String> myAdapter = new ArrayAdapter<String>(getApplicationContext(),
                 android.R.layout.simple_list_item_1, allDevices);
         myAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinView.setAdapter(myAdapter);
-        refView = findViewById(R.id.blueref);
         refView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 BluetoothChecker.checkBluetooth(allDevices, deviceView);
             }
         });
+
     }
 
 //    private void updateWeather(){
