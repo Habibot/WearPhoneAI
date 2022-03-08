@@ -1,6 +1,7 @@
 package com.example.phonewearai;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Criteria;
 import android.location.Location;
@@ -42,6 +43,7 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
     private ImageButton refView;
     private TextView cadenceView;
     private TextView speedView;
+    private ImageButton reportView;
 
     private List<String> allDevices = new ArrayList<>();
 
@@ -67,7 +69,7 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
     private final ArrayList<Integer> heartList = new ArrayList<>();
     private final ArrayList<Integer> cadenceList = new ArrayList<>();
     private final ArrayList<Integer> stepsList = new ArrayList<>();
-    private final ArrayList<Float> speedList = new ArrayList<Float>();
+    private final ArrayList<Float> speedList = new ArrayList<>();
 
 
     @Override
@@ -75,7 +77,6 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         initViews();
-
 
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
@@ -161,7 +162,7 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
         speedList.add(location.getSpeed());
         latView.setText("lat: "+strLat);
         lngView.setText("lng: "+strLng);
-        speedView.setText("Speed: "+String.format("%.2f", strSpeed));
+        speedView.setText("Speed: "+strSpeed);
 
 
         Log.i("Location", "Location has been updated");
@@ -213,7 +214,7 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
         cadenceView = findViewById(R.id.cadence);
         spinView = findViewById(R.id.spinner);
         speedView = findViewById(R.id.speed);
-
+        reportView = findViewById(R.id.report);
         ArrayAdapter<String> myAdapter = new ArrayAdapter<String>(getApplicationContext(),
                 android.R.layout.simple_list_item_1, allDevices);
         myAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -222,6 +223,17 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
             @Override
             public void onClick(View view) {
                 BluetoothChecker.checkBluetooth(allDevices, deviceView);
+            }
+        });
+        reportView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent myIntent = new Intent(MainActivity.this, ChartActivity.class);
+                myIntent.putExtra("heart", heartList);
+                myIntent.putExtra("steps", stepsList);
+                myIntent.putExtra("cadence", cadenceList);
+                myIntent.putExtra("speed", speedList);
+                MainActivity.this.startActivity(myIntent);
             }
         });
 
