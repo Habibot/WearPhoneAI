@@ -23,6 +23,7 @@ public class BluetoothChecker {
 
             if (pairedDevices.size() > 0) {
                 allDevices.clear();
+                allDevices.add("Show all Devices");
 
                 for (BluetoothDevice device : pairedDevices) {
                     if (isConnected(device)) {
@@ -39,6 +40,8 @@ public class BluetoothChecker {
         }
         else{
             deviceView.setText("Bluetooth Deactivated");
+            allDevices.clear();
+            allDevices.add("Show all Devices");
         }
     }
 

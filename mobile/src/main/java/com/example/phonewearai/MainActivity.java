@@ -1,6 +1,7 @@
 package com.example.phonewearai;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Criteria;
@@ -8,15 +9,21 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.Chronometer;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.gms.wearable.MessageClient;
@@ -44,6 +51,12 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
     private TextView cadenceView;
     private TextView speedView;
     private ImageButton reportView;
+    private Chronometer timerView;
+    private Button settresView;
+    private TextView heartTresView;
+    private TextView cadenceTresView;
+    private TextView speedTresView;
+    private TextView tresTextView;
 
     private List<String> allDevices = new ArrayList<>();
 
@@ -57,8 +70,15 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
     private String strOldStepCounter = "0";
     private String strSpeed;
     private int cadence;
+    private int intHeartStart;
+    private int intCadenceStart;
+    private int intSpeedStart;
+    private int intHeartEnd;
+    private int intCadenceEnd;
+    private int intSpeedEnd;
 
-    private boolean isHandler = true;
+    private boolean runStarted = false;
+    private boolean tresholdSet = false;
 
     // Important CONSTANTS for JSON
     private static final String SENSOR_HEART_NAME = "Heartrate";
@@ -70,6 +90,8 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
     private final ArrayList<Integer> cadenceList = new ArrayList<>();
     private final ArrayList<Integer> stepsList = new ArrayList<>();
     private final ArrayList<Float> speedList = new ArrayList<>();
+    private final ArrayList<Float> latList = new ArrayList<>();
+    private final ArrayList<Float> lngList = new ArrayList<>();
 
 
     @Override
@@ -126,29 +148,54 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
         Log.i("Message received", msg);
         Log.i("TAG", "");
 
+        if(msg.equals("start")){
+            runStarted = true;
+            timerView.setBase(SystemClock.elapsedRealtime());
+            timerView.start();
+            return;
+        }
+        if(msg.equals("stop")){
+            runStarted = false;
+            timerView.stop();
+            return;
+        }
+        if(tresholdSet){
+            checkTresholdViolation();
+        }
+
 
         //https://www.py4u.net/discuss/1195822
         Map<String, String> Sensors = new Gson().fromJson(msg, new TypeToken<Map<String, String>>() {}.getType());
 
-        strHeartRate = Sensors.get(SENSOR_HEART_NAME);
-        // if makes sure that it wont be overwritten when heartrate is getting send
-        if(!Sensors.get(SENSOR_STEP_NAME).equals(strStepCounter)){
-            strOldStepCounter = strStepCounter;
-            strStepCounter = Sensors.get(SENSOR_STEP_NAME);
+        // it happens that heart value may be unknown
+        if (!Sensors.get(SENSOR_HEART_NAME).equals("unknown")){
+
+            strHeartRate = Sensors.get(SENSOR_HEART_NAME);
+            // if makes sure that it wont be overwritten when heartrate is getting send
+            if(!Sensors.get(SENSOR_STEP_NAME).equals(strStepCounter)){
+                strOldStepCounter = strStepCounter;
+                strStepCounter = Sensors.get(SENSOR_STEP_NAME);
+            }
+
+            Log.i("TAG", strStepCounter + " oder " + strOldStepCounter);
+
+            // cadence can jump way too high so in case it is, get max 300
+            cadence = Math.min(MovementChecker.updateCadence(strStepCounter, strOldStepCounter), 300);
+            if(Integer.parseInt(strStepCounter) != 0) {
+                if(runStarted){
+                    cadenceList.add(cadence);
+                }
+                cadenceView.setText("Cadence: " + cadence);
+            }
+
+            if(runStarted){
+                heartList.add(Integer.parseInt(strHeartRate));
+                stepsList.add(Integer.parseInt(strStepCounter));
+            }
+
+            heartView.setText("Heartrate: "+strHeartRate);
+            stepView.setText("Steps: " +strStepCounter);
         }
-
-        Log.i("TAG", strStepCounter + " oder " + strOldStepCounter);
-
-        cadence = MovementChecker.updateCadence(strStepCounter, strOldStepCounter);
-        if(Integer.parseInt(strStepCounter) != 0) {
-            cadenceList.add(cadence);
-            cadenceView.setText("Cadence: " + cadence);
-        }
-        heartList.add(Integer.parseInt(strHeartRate));
-        stepsList.add(Integer.parseInt(strStepCounter));
-
-        heartView.setText("Heartrate: "+strHeartRate);
-        stepView.setText("Steps: " +strStepCounter);
 
     }
 
@@ -159,7 +206,13 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
         strLat = Float.toString(lat);
         strLng = Float.toString(lng);
         strSpeed = Float.toString(location.getSpeed());
-        speedList.add(location.getSpeed());
+
+        if(runStarted){
+            speedList.add(location.getSpeed());
+            latList.add((float) location.getLatitude());
+            lngList.add((float) location.getLongitude());
+        }
+
         latView.setText("lat: "+strLat);
         lngView.setText("lng: "+strLng);
         speedView.setText("Speed: "+strSpeed);
@@ -215,16 +268,27 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
         spinView = findViewById(R.id.spinner);
         speedView = findViewById(R.id.speed);
         reportView = findViewById(R.id.report);
+        timerView = findViewById(R.id.timer);
+        settresView = findViewById(R.id.settreshold);
+        heartTresView = findViewById(R.id.hearttres);
+        cadenceTresView = findViewById(R.id.cadencetres);
+        speedTresView = findViewById(R.id.speedtres);
+        tresTextView = findViewById(R.id.trestext);
+
+        allDevices.add("Show all Devices");
         ArrayAdapter<String> myAdapter = new ArrayAdapter<String>(getApplicationContext(),
-                android.R.layout.simple_list_item_1, allDevices);
+                R.layout.spinner_item, allDevices);
         myAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinView.setAdapter(myAdapter);
+
         refView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 BluetoothChecker.checkBluetooth(allDevices, deviceView);
+                spinView.setSelection(0);
             }
         });
+
         reportView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -237,84 +301,95 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
             }
         });
 
+        settresView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                LayoutInflater factory = LayoutInflater.from(MainActivity.this);
+                final View textEntryView = factory.inflate(R.layout.treshold_entry, null);
+
+                final EditText heartStart = (EditText) textEntryView.findViewById(R.id.heartstart);
+                final EditText heartEnd = (EditText) textEntryView.findViewById(R.id.heartend);
+                final EditText cadenceStart = (EditText) textEntryView.findViewById(R.id.cadencestart);
+                final EditText cadenceEnd = (EditText) textEntryView.findViewById(R.id.cadenceend);
+                final EditText speedStart = (EditText) textEntryView.findViewById(R.id.speedstart);
+                final EditText speedEnd = (EditText) textEntryView.findViewById(R.id.speedend);
+
+                final AlertDialog.Builder alert = new AlertDialog.Builder(MainActivity.this);
+                alert.setTitle("Set Treshold")
+                        .setView(textEntryView).setPositiveButton("Save", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        // to prevent errors in call of violation check
+                        tresholdSet = true;
+
+                        // set UI treshold text to the input amount
+                        heartTresView.setText("Treshold: "+ heartStart.getText().toString() + " - " + heartEnd.getText().toString());
+                        cadenceTresView.setText("Treshold: "+ cadenceStart.getText().toString()+ " - " + cadenceEnd.getText().toString());
+                        speedTresView.setText("Treshold: "+ speedStart.getText().toString()+ " - " + speedEnd.getText().toString());
+
+                        // initialisation to integer from EDITABLE
+                        intHeartStart = Integer.parseInt(heartStart.getText().toString());
+                        intHeartEnd = Integer.parseInt(heartEnd.getText().toString());
+                        intCadenceStart = Integer.parseInt(cadenceStart.getText().toString());
+                        intCadenceEnd = Integer.parseInt(cadenceEnd.getText().toString());
+                        intSpeedStart = Integer.parseInt(speedStart.getText().toString());
+                        intSpeedEnd = Integer.parseInt(speedEnd.getText().toString());
+
+                    }
+                }).setNegativeButton("Clear", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        tresholdSet = false;
+                        heartTresView.setText("Treshold: none");
+                        cadenceTresView.setText("Treshold: none");
+                        speedTresView.setText("Treshold: none");
+                        tresTextView.setText("No Treshold Set");
+                    }
+                });
+                alert.show();
+            }
+        });
     }
 
-//    private void updateWeather(){
-//        String weathURL = "https://api.openweathermap.org/data/2.5/weather?lat="+strLat+"&lon="+strLng+"&appid="+weathAPI;
-//        Log.i("weathURL", weathURL);
-//
-//        StringRequest stringRequest = new StringRequest(Request.Method.POST, weathURL, new Response.Listener<String>() {
-//            @Override
-//            public void onResponse(String response) {
-//                try {
-//                    JSONObject jsonResponse = new JSONObject(response);
-//                    JSONArray jsonArray = jsonResponse.getJSONArray("weather");
-//                    JSONObject jsonObjectWeather = jsonArray.getJSONObject(0);
-//                    String description = jsonObjectWeather.getString("description");
-//                    JSONObject jsonObjectMain = jsonResponse.getJSONObject("main");
-//                    double temp = jsonObjectMain.getDouble("temp") - 273.15; // calvin temperature
-//                    double feelsLike = jsonObjectMain.getDouble("feels_like") - 273.15; // calvin temperature
-//                    int pressure = jsonObjectMain.getInt("pressure");
-//                    int humidity = jsonObjectMain.getInt("humidity");
-//                    JSONObject jsonObjectWind = jsonResponse.getJSONObject("wind");
-//                    String wind = jsonObjectWind.getString("speed");
-//                    JSONObject jsonObjectClouds = jsonResponse.getJSONObject("clouds");
-//                    String clouds = jsonObjectClouds.getString("all");
-//                    JSONObject jsonObjectSys = jsonResponse.getJSONObject("sys");
-//                    String countryName = jsonObjectSys.getString("country");
-//                    String cityName = jsonResponse.getString("name");
-//
-//                    String strTemp = Double.toString(Math.round(temp));
-//
-//                    tempView.setText("Temperature: "+strTemp);
-//                    cityView.setText("City: "+cityName);
-//
-//                } catch (JSONException e) {
-//                    e.printStackTrace();
-//                }
-//
-//            }
-//        }, new Response.ErrorListener() {
-//            @Override
-//            public void onErrorResponse(VolleyError error) {
-//                cityView.setText("Weather: API ERROR");
-//            }
-//        });
-//
-//        RequestQueue requestQueue = Volley.newRequestQueue(getApplicationContext());
-//        requestQueue.add(stringRequest);
-//    }
-//
-//    private void updateElevation(){
-//        String altURL = "https://api.opentopodata.org/v1/aster30m?locations="+strLat+","+strLng;
-//        Log.i("altURL", altURL);
-//
-//        StringRequest stringRequest = new StringRequest(Request.Method.GET, altURL, new Response.Listener<String>() {
-//            @Override
-//            public void onResponse(String response) {
-//                try {
-//                    JSONObject jsonResponse = new JSONObject(response);
-//                    JSONArray jsonArray = jsonResponse.getJSONArray("results");
-//                    JSONObject jsonObjectElevation = jsonArray.getJSONObject(0);
-//                    elevation = jsonObjectElevation.getDouble("elevation");
-//                    strElevation = Double.toString(elevation);
-//                    eleView.setText("elevation: "+strElevation);
-//
-//                } catch (JSONException e) {
-//                    e.printStackTrace();
-//                }
-//
-//
-//            }
-//        }, new Response.ErrorListener() {
-//            @Override
-//            public void onErrorResponse(VolleyError error) {
-//                eleView.setText("elevation: API ERROR");
-//            }
-//        });
-//
-//        RequestQueue requestQueue = Volley.newRequestQueue(getApplicationContext());
-//        requestQueue.add(stringRequest);
-//    }
+    private void checkTresholdViolation(){
+        String fullText = "";
+        if (Integer.parseInt(strHeartRate) < intHeartStart || intHeartEnd < Integer.parseInt(strHeartRate)) {
+            // heartbeat too slow
+            if (Integer.parseInt(strHeartRate) < intHeartStart){
+                fullText += "Careful! Heartbeat is low\n";
+            }
+            // heartbeat too fast
+            if (intHeartEnd < Integer.parseInt(strHeartRate)){
+                fullText += "Careful! Heartbeat is high\n";
+            }
+        } else {
+            fullText += "Heartbeat is good!\n";
+        }
+        if (cadence < intCadenceStart || intCadenceEnd < cadence){
+            // cadence too low
+            if (cadence < intCadenceStart){
+                fullText += "Careful! Cadence is low\n";
+            }
+            // cadence too fast
+            if (intCadenceEnd < cadence){
+                fullText += "Careful! Cadence is high\n";
+            }
+        } else {
+            fullText += "Cadence is Good!\n";
+        }
+        if (Float.parseFloat(strSpeed) < intSpeedStart || intSpeedEnd < Float.parseFloat(strSpeed)){
+            // speed too slow
+            if (Float.parseFloat(strSpeed) < intSpeedStart){
+                fullText += "Careful! Speed is low\n";
+            }
+            // speed too fast
+            if (intSpeedEnd < Float.parseFloat(strSpeed)){
+                fullText += "Careful! Speed is high\n";
+            }
+        } else {
+            fullText += "Speed is Good!\n";
+        }
+        tresTextView.setText(fullText);
+    }
 
 }

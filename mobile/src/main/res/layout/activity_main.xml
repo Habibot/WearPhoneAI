@@ -7,45 +7,30 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-
-    <TextView
-        android:id="@+id/heart"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:gravity="center_horizontal"
-        android:text="Heartrate: unavailable"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <TextView
-        android:id="@+id/temp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:gravity="center_horizontal"
-        android:text="Temperature: unavailable"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/heart" />
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="150dp"
+        android:layout_height="50dp"
+        android:layout_marginStart="20dp"
+        app:srcCompat="@drawable/app_title"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
         android:id="@+id/lat"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
         android:gravity="center_horizontal"
+        android:layout_marginTop="75dp"
         android:text="lat: unavailable"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/temp" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/lng"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="0dp"
         android:gravity="center_horizontal"
         android:text="lng: unavailable"
         app:layout_constraintEnd_toEndOf="parent"
@@ -56,7 +41,6 @@
         android:id="@+id/ele"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="0dp"
         android:gravity="center_horizontal"
         android:text="elevation: unavailable"
         app:layout_constraintEnd_toEndOf="parent"
@@ -64,23 +48,40 @@
         app:layout_constraintTop_toBottomOf="@+id/lng" />
 
     <TextView
-        android:id="@+id/city"
+        android:id="@+id/temp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
         android:gravity="center_horizontal"
-        android:text="City: unavailable"
+        android:text="Temperature: unavailable"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/ele" />
 
     <TextView
-        android:id="@+id/step"
+        android:id="@+id/city"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
         android:gravity="center_horizontal"
-        android:text="Steps: unavailable"
+        android:text="City: unavailable"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/temp" />
+
+    <ImageButton
+        android:id="@+id/blueref"
+        android:layout_width="25dp"
+        android:layout_height="30dp"
+        android:background="@null"
+        app:layout_constraintBottom_toBottomOf="@id/spinner"
+        app:layout_constraintRight_toLeftOf="@id/spinner"
+        app:srcCompat="@android:drawable/ic_popup_sync"
+        tools:ignore="MissingConstraints" />
+
+    <Spinner
+        android:id="@+id/spinner"
+        android:layout_width="200dp"
+        android:layout_height="30dp"
+        android:layout_marginTop="10dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/city" />
@@ -89,65 +90,121 @@
         android:id="@+id/device"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="0dp"
         android:gravity="center_horizontal"
         android:text="No Bluetooth Device Connected"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/step" />
+        app:layout_constraintTop_toBottomOf="@id/spinner" />
 
-    <Spinner
-        android:id="@+id/spinner"
+    <TextView
+        android:id="@+id/heart"
         android:layout_width="150dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:minHeight="30dp"
-        android:background="@drawable/blue_outline"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="50dp"
+        android:layout_marginStart="20dp"
+        android:text="Heartrate: unavailable"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/device" />
+        app:layout_constraintTop_toBottomOf="@id/device" />
 
-    <ImageButton
-        android:id="@+id/blueref"
-        android:layout_width="wrap_content"
+    <TextView
+        android:id="@+id/hearttres"
+        android:layout_width="150dp"
         android:layout_height="wrap_content"
-        android:background="@null"
-        app:srcCompat="@android:drawable/ic_popup_sync"
-        app:layout_constraintRight_toLeftOf="@id/spinner"
-        app:layout_constraintBottom_toBottomOf="@id/spinner"
-        tools:ignore="MissingConstraints" />
+        android:layout_marginTop="50dp"
+        android:layout_marginEnd="20dp"
+        android:text="Treshold: none"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/device" />
+
+
+    <TextView
+        android:id="@+id/step"
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:text="Steps: unavailable"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/heart" />
+
 
     <TextView
         android:id="@+id/cadence"
-        android:layout_width="wrap_content"
+        android:layout_width="150dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:gravity="center_horizontal"
+        android:layout_marginStart="20dp"
         android:text="Cadence: unavailable"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/blueref" />
+        app:layout_constraintTop_toBottomOf="@id/step" />
+
+    <TextView
+        android:id="@+id/cadencetres"
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="19dp"
+        android:layout_marginEnd="20dp"
+        android:text="Treshold: none"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/hearttres" />
 
     <TextView
         android:id="@+id/speed"
-        android:layout_width="wrap_content"
+        android:layout_width="150dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:gravity="center_horizontal"
+        android:layout_marginStart="20dp"
         android:text="Speed: unavailable"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/cadence" />
+
+    <TextView
+        android:id="@+id/speedtres"
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="20dp"
+        android:text="Treshold: none"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/cadencetres" />
+
+    <Button
+        android:id="@+id/settreshold"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="50dp"
+        android:text="SET TRESHOLD"
+        app:layout_constraintEnd_toEndOf="@id/speedtres"
+        app:layout_constraintTop_toBottomOf="@id/speedtres" />
+
+    <Chronometer
+        android:id="@+id/timer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="100dp"
+        android:textSize="25sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/speed"/>
+
+    <TextView
+        android:id="@+id/trestext"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="No Treshold Set"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/timer" />
 
     <ImageButton
         android:id="@+id/report"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginBottom="50dp"
         app:srcCompat="?android:attr/actionModeFindDrawable"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/speed"
+        app:layout_constraintBottom_toBottomOf="parent"
         android:contentDescription="REPORT" />
+
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

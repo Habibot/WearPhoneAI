@@ -1,6 +1,7 @@
 package com.example.phonewearai;
 
 import android.app.Activity;
+import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -10,6 +11,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 
 import com.example.phonewearai.databinding.ActivityMainBinding;
@@ -30,6 +33,7 @@ public class MainActivity extends Activity implements SensorEventListener {
 
     private TextView heartView;
     private TextView stepView;
+    private Button buttonView;
     private ActivityMainBinding binding;
     private SensorManager mSensorManager;
     private Sensor mHeart;
@@ -95,8 +99,6 @@ public class MainActivity extends Activity implements SensorEventListener {
         if (mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER) != null) {
             mSensorManager.registerListener(this,mStepCounter, SensorManager.SENSOR_DELAY_NORMAL);
         }
-
-
     }
 
     @Override
@@ -131,7 +133,6 @@ public class MainActivity extends Activity implements SensorEventListener {
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int i) {
-
     }
 
     private void updateSensorValue(float value, String sensorName){
@@ -212,6 +213,24 @@ public class MainActivity extends Activity implements SensorEventListener {
     private void initViews(){
         heartView = findViewById(R.id.Heart);
         stepView = findViewById(R.id.Step);
+        buttonView = findViewById(R.id.button);
+        buttonView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                if (buttonView.getText().toString().equals("START")){
+                    Log.i("Test", buttonView.getText().toString());
+                    buttonView.setBackgroundColor(Color.RED);
+                    buttonView.setText("STOP");
+                    beginSendMessageToPhone("start");
+                } else if (buttonView.getText().toString().equals("STOP")){
+                    Log.i("Test", buttonView.getText().toString());
+                    buttonView.setBackgroundColor(Color.GREEN);
+                    buttonView.setText("START");
+                    beginSendMessageToPhone("stop");
+                }
+            }
+        });
     }
 
     private void initHeart(){
