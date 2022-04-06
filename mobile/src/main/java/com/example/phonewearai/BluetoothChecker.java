@@ -2,7 +2,6 @@ package com.example.phonewearai;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.util.Log;
 import android.widget.TextView;
 
 import java.lang.reflect.Method;
@@ -27,7 +26,6 @@ public class BluetoothChecker {
 
                 for (BluetoothDevice device : pairedDevices) {
                     if (isConnected(device)) {
-                        Log.i("NAME", device.getName());
                         String deviceName = device.getName();
                         allDevices.add(deviceName);
                     }

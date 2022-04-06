@@ -1,7 +1,6 @@
 package com.example.phonewearai;
 
 import android.content.Context;
-import android.util.Log;
 import android.widget.TextView;
 
 import com.android.volley.Request;
@@ -32,7 +31,6 @@ public class WeatherChecker {
 
     private static void updateWeather(Context context, TextView tempView, TextView cityView){
         String weathURL = "https://api.openweathermap.org/data/2.5/weather?lat="+strLat+"&lon="+strLng+"&appid="+weathAPI;
-        Log.i("weathURL", weathURL);
 
         StringRequest stringRequest = new StringRequest(Request.Method.POST, weathURL, new Response.Listener<String>() {
             @Override
@@ -78,7 +76,6 @@ public class WeatherChecker {
 
     private static void updateElevation(Context context, TextView eleView){
         String altURL = "https://api.opentopodata.org/v1/aster30m?locations="+strLat+","+strLng;
-        Log.i("altURL", altURL);
 
         StringRequest stringRequest = new StringRequest(Request.Method.GET, altURL, new Response.Listener<String>() {
             @Override
