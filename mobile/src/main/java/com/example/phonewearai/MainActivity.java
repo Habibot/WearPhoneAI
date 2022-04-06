@@ -10,7 +10,6 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.SystemClock;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -100,10 +99,10 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
         setContentView(R.layout.activity_main);
         initViews();
 
-        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-
         // Checks for Request --> ask for permission
         PermissionChecker.checkPermission(getApplicationContext(),this);
+
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
         // Initialize the location fields
         Criteria criteria = new Criteria();
@@ -111,7 +110,6 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
 
         Location location = locationManager.getLastKnownLocation(provider);
         if (location != null){
-            Log.i("Provider", provider+" has been selected!");
             onLocationChanged(location);
             WeatherChecker.callWeather(
                     strLat,
@@ -137,7 +135,6 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
     protected void onPause() {
         super.onPause();
 
-
         locationManager.removeUpdates(this);
         Wearable.getMessageClient(this).removeListener(this);
     }
@@ -145,8 +142,6 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
     @Override
     public void onMessageReceived(MessageEvent messageEvent) {
         String msg = new String(messageEvent.getData());
-        Log.i("Message received", msg);
-        Log.i("TAG", "");
 
         if(msg.equals("start")){
             runStarted = true;
@@ -162,22 +157,17 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
         if(tresholdSet){
             checkTresholdViolation();
         }
-
-
         //https://www.py4u.net/discuss/1195822
         Map<String, String> Sensors = new Gson().fromJson(msg, new TypeToken<Map<String, String>>() {}.getType());
 
         // it happens that heart value may be unknown
         if (!Sensors.get(SENSOR_HEART_NAME).equals("unknown")){
-
             strHeartRate = Sensors.get(SENSOR_HEART_NAME);
             // if makes sure that it wont be overwritten when heartrate is getting send
             if(!Sensors.get(SENSOR_STEP_NAME).equals(strStepCounter)){
                 strOldStepCounter = strStepCounter;
                 strStepCounter = Sensors.get(SENSOR_STEP_NAME);
             }
-
-            Log.i("TAG", strStepCounter + " oder " + strOldStepCounter);
 
             // cadence can jump way too high so in case it is, get max 300
             cadence = Math.min(MovementChecker.updateCadence(strStepCounter, strOldStepCounter), 300);
@@ -187,7 +177,6 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
                 }
                 cadenceView.setText("Cadence: " + cadence);
             }
-
             if(runStarted){
                 heartList.add(Integer.parseInt(strHeartRate));
                 stepsList.add(Integer.parseInt(strStepCounter));
@@ -196,7 +185,6 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
             heartView.setText("Heartrate: "+strHeartRate);
             stepView.setText("Steps: " +strStepCounter);
         }
-
     }
 
     @Override
@@ -216,9 +204,6 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
         latView.setText("lat: "+strLat);
         lngView.setText("lng: "+strLng);
         speedView.setText("Speed: "+strSpeed);
-
-
-        Log.i("Location", "Location has been updated");
     }
 
     @Override
@@ -236,21 +221,17 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         switch (requestCode) {
             case REQUEST_LOCATION_PERMISSION: {
-                // If request is cancelled, the result arrays are empty.
+                // if request is cancelled result arrays empty
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    // permission was granted
+                    //permission granted
                     Criteria criteria = new Criteria();
                     provider = locationManager.getBestProvider(criteria, false);
 
                 } else {
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
+                    // permission denied
                 }
             }
-
-            // other 'case' lines to check for other
-            // permissions this app might request
         }
     }
 
@@ -294,7 +275,6 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
             public void onClick(View view) {
                 Intent myIntent = new Intent(MainActivity.this, ChartActivity.class);
                 myIntent.putExtra("heart", heartList);
-                myIntent.putExtra("steps", stepsList);
                 myIntent.putExtra("cadence", cadenceList);
                 myIntent.putExtra("speed", speedList);
                 MainActivity.this.startActivity(myIntent);
@@ -334,7 +314,6 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
                         intCadenceEnd = Integer.parseInt(cadenceEnd.getText().toString());
                         intSpeedStart = Integer.parseInt(speedStart.getText().toString());
                         intSpeedEnd = Integer.parseInt(speedEnd.getText().toString());
-
                     }
                 }).setNegativeButton("Clear", new DialogInterface.OnClickListener() {
                     @Override
@@ -391,5 +370,4 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
         }
         tresTextView.setText(fullText);
     }
-
 }

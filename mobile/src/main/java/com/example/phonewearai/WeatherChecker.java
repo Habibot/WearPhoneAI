@@ -96,8 +96,6 @@ public class WeatherChecker {
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-
-
             }
         }, new Response.ErrorListener() {
             @Override

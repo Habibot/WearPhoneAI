@@ -10,7 +10,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -48,7 +47,6 @@ public class MainActivity extends Activity implements SensorEventListener {
 
     private String transcriptionNodeId;
 
-
     private final int DATA_MESSAGE_DELAY = 5000; // 5 second delay
 
 
@@ -69,24 +67,23 @@ public class MainActivity extends Activity implements SensorEventListener {
         setContentView(binding.getRoot());
         initViews();
 
-        mSensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
-
         PermissionChecker.checkPermissions(getApplicationContext(), this);
+
+        mSensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
         initHeart();
         initStep();
+
         startHandlerThread();
 
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                Log.i("HANDLER", "IT WORKS");
                 if (jsonMsg.length() != 0){
                     beginSendMessageToPhone(jsonMsg.toString());
                 }
                 handler.postDelayed(this, DATA_MESSAGE_DELAY);
             }
         }, DATA_MESSAGE_DELAY);
-
     }
 
 
@@ -156,10 +153,12 @@ public class MainActivity extends Activity implements SensorEventListener {
         AsyncTask.execute(() -> {
 
             CapabilityInfo capabilityInfo;
-            try {
 
+            try {
                 capabilityInfo = Tasks.await(
-                        Wearable.getCapabilityClient(getBaseContext()).getCapability(SET_MESSAGE_CAPABILITY, CapabilityClient.FILTER_REACHABLE));
+                        Wearable.getCapabilityClient(getBaseContext()).getCapability(
+                                SET_MESSAGE_CAPABILITY,
+                                CapabilityClient.FILTER_REACHABLE));
                 updateTranscriptionCapability(capabilityInfo);
                 requestTranscription(msg.getBytes());
 
@@ -217,14 +216,11 @@ public class MainActivity extends Activity implements SensorEventListener {
         buttonView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
                 if (buttonView.getText().toString().equals("START")){
-                    Log.i("Test", buttonView.getText().toString());
                     buttonView.setBackgroundColor(Color.RED);
                     buttonView.setText("STOP");
                     beginSendMessageToPhone("start");
                 } else if (buttonView.getText().toString().equals("STOP")){
-                    Log.i("Test", buttonView.getText().toString());
                     buttonView.setBackgroundColor(Color.GREEN);
                     buttonView.setText("START");
                     beginSendMessageToPhone("stop");
@@ -258,5 +254,4 @@ public class MainActivity extends Activity implements SensorEventListener {
             mStepCounter = mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
         }
     }
-
 }

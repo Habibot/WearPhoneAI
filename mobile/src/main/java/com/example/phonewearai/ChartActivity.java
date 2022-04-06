@@ -27,14 +27,10 @@ public class ChartActivity extends AppCompatActivity {
         chart = findViewById(R.id.scatterchart);
 
         ArrayList<Integer> heartList = intent.getIntegerArrayListExtra("heart");
-       // ArrayList<Integer> stepsList = intent.getIntegerArrayListExtra("steps");
         ArrayList<Integer> cadenceList = intent.getIntegerArrayListExtra("cadence");
         ArrayList<Float> speedList = (ArrayList<Float>) intent.getSerializableExtra("speed");
 
-//        Log.i("",heartList.toString());
-//        Log.i("",stepsList.toString());
-//        Log.i("",cadenceList.toString());
-//        Log.i("",speedList.toString());
+
         chart.getDescription().setEnabled(false);
         chart.setDrawGridBackground(false);
         chart.setTouchEnabled(true);
@@ -51,7 +47,6 @@ public class ChartActivity extends AppCompatActivity {
         l.setOrientation(Legend.LegendOrientation.VERTICAL);
         l.setDrawInside(false);
         l.setXOffset(5f);
-
 
         ArrayList<Entry> heartValues = addIntValues(heartList);
         ArrayList<Entry> cadenceValues = addIntValues(cadenceList);
