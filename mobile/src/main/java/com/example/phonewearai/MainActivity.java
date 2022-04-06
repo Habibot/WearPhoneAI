@@ -163,10 +163,13 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
         // it happens that heart value may be unknown
         if (!Sensors.get(SENSOR_HEART_NAME).equals("unknown")){
             strHeartRate = Sensors.get(SENSOR_HEART_NAME);
-            // if makes sure that it wont be overwritten when heartrate is getting send
-            if(!Sensors.get(SENSOR_STEP_NAME).equals(strStepCounter)){
-                strOldStepCounter = strStepCounter;
-                strStepCounter = Sensors.get(SENSOR_STEP_NAME);
+            // can happen that wear json object has no steps yet.
+            if (Sensors.get(SENSOR_STEP_NAME) != null){
+                // if makes sure that it wont be overwritten when heartrate is getting send
+                if(!Sensors.get(SENSOR_STEP_NAME).equals(strStepCounter)){
+                    strOldStepCounter = strStepCounter;
+                    strStepCounter = Sensors.get(SENSOR_STEP_NAME);
+                }
             }
 
             // cadence can jump way too high so in case it is, get max 300
