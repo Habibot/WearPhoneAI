@@ -99,10 +99,10 @@ public class MainActivity extends AppCompatActivity implements MessageClient.OnM
         setContentView(R.layout.activity_main);
         initViews();
 
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+
         // Checks for Request --> ask for permission
         PermissionChecker.checkPermission(getApplicationContext(),this);
-
-        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
         // Initialize the location fields
         Criteria criteria = new Criteria();
