@@ -16,7 +16,7 @@ import org.json.JSONObject;
 
 public class WeatherChecker {
 
-    private static String weathAPI = "c198627a1303756c85ea29900f1eaa7c";
+    private static String weathAPI = ""; // add API key
     private static String strLat;
     private static String strLng;
     private static String strElevation;
